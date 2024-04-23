@@ -1,7 +1,11 @@
 import os
 
-main_dir = None
-assert main_dir is not None, "Set 'main_dir' to data folder"
+# location of boggart repository
+BOGGART_REPO_PATH = "/home/neil/boggart"
+main_dir = f"{BOGGART_REPO_PATH}/data/"
+
+assert os.path.exists(BOGGART_REPO_PATH), "Update Boggart Repository Path in configs.py"
+assert main_dir is not None, "Set main_dir to <REPO PATH>/boggart/data/"
 
 video_directory = f"{main_dir}{{vid_label}}{{hour}}/"
 
@@ -18,6 +22,7 @@ obj_dets_dir = f"{{video_dir}}object_detection_results/{{model}}/"
 obj_dets_csv = f"{{obj_dets_dir}}{{name}}{{hour}}.csv"
 
 query_results_dir = f"{{video_dir}}query_results/{{query_type}}/"
+boggart_results_dir = f"{{video_dir}}boggart_results/{{query_type}}/"
 
 pipeline_results_dir = f"{main_dir}pipeline_results/"
 

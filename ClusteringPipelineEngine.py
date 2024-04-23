@@ -2,6 +2,7 @@ from operator import itemgetter
 
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 from configs import BackgroundConfig, TrajectoryConfig
 from VideoData import VideoData
@@ -68,7 +69,7 @@ class ClusteringPipelineEngine:
 
         return vecs
 
-    def execute(self, hours, query_type, model, query_class, acc_target, percent_clusters, ioda):
+    def execute(self, hours, query_type, model, query_class, acc_target, percent_clusters, ioda, get_boggart_results=False):
         if type(hours) == int:
             hours = list(hours)
 
@@ -161,7 +162,29 @@ class ClusteringPipelineEngine:
         assert len(full_results) == len(self.all_dfs)
 
         total_frames = len(full_results) * self.query_seg_size * self.fps / 30
-
-        print(score, mfs, total_frames, np.round(mfs/total_frames, 4), n_clusters)
-
-        return score, mfs, total_frames, np.round(mfs/total_frames, 4), n_clusters
+        
+        if not get_boggart_results:
+            return score, mfs, total_frames, np.round(mfs/total_frames, 4), n_clusters
+        
+        assert self.query_seg_size == self.chunk_size        
+        
+        all_rows = []
+        for _, row in full_results.sort_values(["hour", "chunk_start"]).iterrows():
+            vd = VideoData(row.vid, row.hour)
+            qp = QueryProcessor(query_type, vd, model,query_class, self.query_conf, row.mfs_approach, self.bg_conf, self.traj_conf, ioda, self.query_seg_size)
+            chunk_result = qp.load_boggart_results(row.chunk_start, row.seg_start)
+            for frame_diff, frame_result in enumerate(chunk_result):
+                if query_type == "bbox":
+                    for det in frame_result:
+                        all_rows.append([row.hour, row.chunk_start+frame_diff] + det)
+                else:
+                    all_rows.append([row.hour, row.chunk_start+frame_diff, frame_result])
+        
+        if query_type == "bbox":
+            return pd.DataFrame(all_rows, columns=["hour", "frame_no", "x1", "y1", "x2", "y2"])
+        elif query_type == "count":
+            return pd.DataFrame(all_rows, columns=["hour", "frame_no", "count"])
+        elif query_type == "binary":
+            return pd.DataFrame(all_rows, columns=["hour", "frame_no", "found"])
+        else:
+            assert False

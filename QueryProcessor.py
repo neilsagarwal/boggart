@@ -1,4 +1,5 @@
 import os
+import json
 import pickle
 from collections import defaultdict
 from operator import itemgetter
@@ -7,13 +8,11 @@ import numpy as np
 import pandas as pd
 from scipy import optimize
 
-from configs import BackgroundConfig, TrajectoryConfig, query_results_dir
+from configs import BackgroundConfig, TrajectoryConfig, query_results_dir, boggart_results_dir
 from ingest import IngestTimeProcessing
 from ModelProcessor import ModelProcessor
 from utils import (calculate_bbox_accuracy, calculate_count_accuracy,
                    get_ioda_matrix, calculate_binary_accuracy)
-
-all_times = []
 
 class QueryProcessor:
 
@@ -35,9 +34,10 @@ class QueryProcessor:
         assert query_type in qtypes
 
         self.results_folder = {qtype : query_results_dir.format(video_dir=self.video_data.video_dir, query_type=qtype) for qtype in qtypes}
-
+        self.boggart_results_folder = {qtype : boggart_results_dir.format(video_dir=self.video_data.video_dir, query_type=qtype) for qtype in qtypes}
         for q in qtypes:
             os.makedirs(self.results_folder[q], exist_ok=True)
+            os.makedirs(self.boggart_results_folder[q], exist_ok=True)
 
     def get_results_fname(self, chunk_start, segment_start, get_save_info=False, query_type=None):
 
@@ -47,6 +47,12 @@ class QueryProcessor:
         results_fname = f"{self.results_folder[query]}{'_'.join(list(map(str, cols[3:])))}.csv" # vid/hour/query in results folder
         if get_save_info:
             return results_fname, colnames, cols
+        return results_fname
+    
+    def get_boggart_results_fname(self, chunk_start, segment_start, query_type=None):
+        query = self.query_type if query_type is None else query_type
+        _, cols = self._get_label_cols(chunk_start, segment_start, query)
+        results_fname = f"{self.boggart_results_folder[query]}{'_'.join(list(map(str, cols[3:])))}.json" # vid/hour/query in results folder
         return results_fname
 
     def _get_label_cols(self, chunk_start, segment_start, query):
@@ -234,6 +240,11 @@ class QueryProcessor:
             markers.append(marker)
         markers.append(start_frame + num_frames)
         return markers
+    
+    def load_boggart_results(self, chunk_start, query_segment_start):
+        boggart_results_fname = self.get_boggart_results_fname(chunk_start, query_segment_start)
+        with open(boggart_results_fname, "r") as f:
+            return json.load(f)
 
     # return None if no video for this minute...
     def execute(self, chunk_start, query_segment_start, check_only=True, get_results_df=False, get_mfs=False):
@@ -313,6 +324,10 @@ class QueryProcessor:
 
             df = pd.DataFrame([cols], columns=colnames)
             df.to_csv(results_fname, index=False)
+            
+            boggart_results_fname = self.get_boggart_results_fname(chunk_start, query_segment_start)
+            with open(boggart_results_fname, "w") as f:
+                json.dump([[r.tolist() for r in result] for result in return_dictionary["query_results"]], f)
 
             if get_results_df:
                 return df #, return_dictionary
@@ -343,6 +358,10 @@ class QueryProcessor:
                 binary_df = df
             if query_type == "count":
                 count_df = df
+                
+            boggart_results_fname = self.get_boggart_results_fname(chunk_start, query_segment_start, query_type=query_type)
+            with open(boggart_results_fname, "w") as f:
+                json.dump(return_dictionary["query_results"], f)
 
         if get_results_df:
             df = count_df if self.query_type == "count" else binary_df

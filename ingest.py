@@ -93,7 +93,7 @@ class IngestTimeProcessing:
                         bg_data = pickle.load(f)
                         return [bg_data['bg_max'], bg_data['bg_max2']]
                 return
-        except pickle.UnpicklingError:
+        except (pickle.UnpicklingError, EOFError):
             pass
 
         bg_before_vals = self.get_base_background(bg_start-self.bg_config.bg_dur) if bg_start - self.bg_config.bg_dur >= 0 else None

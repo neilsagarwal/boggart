@@ -3,7 +3,7 @@ from typing import List, Tuple, DefaultDict
 import math
 import numpy as np
 import logging as log
-log.basicConfig(format='%(levelname)s:%(message)s', level=log.INFO)
+log.basicConfig(format='%(levelname)s:%(message)s', level=log.ERROR)
 
 class ObjectState(Enum):
     UNDEFINED = 1

@@ -38,9 +38,7 @@ class ModelProcessor:
 
         gt_boxes = []
         gt_counts = []
-        host = None
-        assert host is not None, "Set host to location of mongo db server"
-        connect(self.video_data.db_vid, host=host, port=27017, connectTimeoutMS=10000, maxPoolSize=10000)
+        connect(self.video_data.db_vid, host="localhost", connectTimeoutMS=10000, maxPoolSize=10000)
         for elem in Frame.objects(hour=self.video_data.hour, frame_no__in=range(start_frame, end_frame, int(30/self.fps))).order_by("+frame_no"):
             inferenceResults = elem.inferenceResults[self.model]
             curr_counts = 0
