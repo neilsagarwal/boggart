@@ -10,8 +10,9 @@ import numpy as np
 from tqdm import tqdm, trange
 
 import tensorflow as tf
+from evaluator import Evaluator
 tf.get_logger().setLevel('ERROR')
-from object_detection.metrics import coco_evaluation
+# from object_detection.metrics import coco_evaluation
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' # to quiet tensorflow logging
 
@@ -104,8 +105,10 @@ def prepare_vid(vname, start):
 
 @redirect(stdout=None, stderr=None)
 def calculate_bbox_accuracy(model_a_dets, model_b_dets, prep_batch_only=False):
+    # check both empty
     if len(model_a_dets) == len(model_b_dets) == 0:
         return 1
+    # check one is empty
     if len(model_a_dets) == 0 or len(model_b_dets) == 0:
         return 0
 
@@ -123,13 +126,28 @@ def calculate_bbox_accuracy(model_a_dets, model_b_dets, prep_batch_only=False):
         "groundtruth_boxes" : np.array(model_a_dets, dtype=np.float32),
         "groundtruth_classes" : np.array([0 for _ in range(len(model_a_dets))], dtype=np.uint8)
     }
+    # x1,y1,x2,y2 -> x1,y1,w,h
+    det_dict['detection_boxes'] = np.hstack((det_dict['detection_boxes'][:, 0:2],
+                                            (det_dict['detection_boxes'][:, 2] - det_dict['detection_boxes'][:, 0])[:,np.newaxis],
+                                            (det_dict['detection_boxes'][:, 3] - det_dict['detection_boxes'][:, 1])[:,np.newaxis]))
 
-    evaluator = coco_evaluation.CocoDetectionEvaluator([{"id" : 0, "name" : ""}])
-    evaluator.add_single_ground_truth_image_info(image_id="", groundtruth_dict=gt_dict)
-    evaluator.add_single_detected_image_info(image_id="", detections_dict=det_dict)
-    x = evaluator.evaluate()
-    y = round(x['DetectionBoxes_Precision/mAP'], 3)
-    return y
+    gt_dict['groundtruth_boxes'] = np.hstack((gt_dict['groundtruth_boxes'][:, 0:2],
+                                            (gt_dict['groundtruth_boxes'][:, 2] - gt_dict['groundtruth_boxes'][:, 0])[:,np.newaxis],
+                                            (gt_dict['groundtruth_boxes'][:, 3] - gt_dict['groundtruth_boxes'][:, 1])[:,np.newaxis]))
+
+    det_combined = np.hstack((det_dict['detection_boxes'], det_dict['detection_scores'][:, np.newaxis], det_dict['detection_classes'][:, np.newaxis]))
+    gt_combined = np.hstack((gt_dict['groundtruth_boxes'], gt_dict['groundtruth_classes'][:, np.newaxis]))
+
+    # evaluator = coco_evaluation.CocoDetectionEvaluator([{"id" : 0, "name" : ""}])
+    # evaluator.add_single_ground_truth_image_info(image_id="", groundtruth_dict=gt_dict)
+    # evaluator.add_single_detected_image_info(image_id="", detections_dict=det_dict)
+    # x = evaluator.evaluate()
+    # y = round(x['DetectionBoxes_Precision/mAP'], 3)
+    coco_eval = Evaluator()
+    coco_eval.add(det_combined, gt_combined)
+    coco_eval.accumulate()
+    a = coco_eval.summarize()
+    return round(a, 3 ) 
 
 @lru_cache(512)
 def calculate_count_accuracy(model_a_dets, model_b_dets):

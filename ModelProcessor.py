@@ -21,14 +21,14 @@ class ModelProcessor:
             self.do_bound = do_bound
 
             if "voc" in model:
-                class_label = {6: "car", 14: "person"}[query_class]
+                self.class_label = {6: "car", 14: "person"}[query_class]
             else:
-                class_label = {2: "car", 0: "person", 1: "bicycle", 7: "truck", 8: "boat", 56 : "chair", 60 : "dining table", 41 : "cup", 39 : "bottle", 14 : "bird"}[query_class]
+                self.class_label = {2: "car", 0: "person", 1: "bicycle", 7: "truck", 8: "boat", 56 : "chair", 60 : "dining table", 41 : "cup", 39 : "bottle", 14 : "bird"}[query_class]
 
             self.crop_region = None
             if self.do_crop:
-                assert class_label in crops[self.video_data.db_vid]
-                self.crop_region = crops[self.video_data.db_vid][class_label]
+                assert self.class_label in crops[self.video_data.db_vid]
+                self.crop_region = crops[self.video_data.db_vid][self.class_label]
 
             if self.do_bound:
                 self.bounds = frame_bounds[self.video_data.db_vid]
@@ -38,26 +38,33 @@ class ModelProcessor:
 
         gt_boxes = []
         gt_counts = []
-        connect(self.video_data.db_vid, host="localhost", connectTimeoutMS=10000, maxPoolSize=10000)
+        connect(self.video_data.db_vid, host="mango4.kaist.ac.kr",
+            username='root',password='root',authentication_source='admin',connectTimeoutMS=10000, maxPoolSize=10000)
         for elem in Frame.objects(hour=self.video_data.hour, frame_no__in=range(start_frame, end_frame, int(30/self.fps))).order_by("+frame_no"):
             inferenceResults = elem.inferenceResults[self.model]
             curr_counts = 0
             curr_boxes = []
             for score, pred_class, det in zip(inferenceResults.detection_scores, inferenceResults.detection_classes, inferenceResults.detection_boxes):
+                # type exchange
+                det = [float(x) for x in det]
+                
                 assert score <= 1
                 assert type(pred_class) is not float
-                if score >= self.query_conf and self.query_class == pred_class:
+
+                if score >= self.query_conf and pred_class == self.class_label:
                     toss = False
                     if self.crop_region is not None:
                         # ensures no intersection
-                        toss = self.crop_region[0] <= det[0] <= self.crop_region[2] and self.crop_region[1] <= det[1] <= self.crop_region[3]
-                        toss = toss or (self.crop_region[0] <= det[2] <= self.crop_region[2] and self.crop_region[1] <= det[3] <= self.crop_region[3])
+                        toss = self.crop_region[0] <= float(det[0]) <= self.crop_region[2] and self.crop_region[1] <= float(det[1]) <= self.crop_region[3]
+                        # toss = toss or (self.crop_region[0] <= float(det[2]) <= self.crop_region[2] and self.crop_region[1] <= float(det[3]) <= self.crop_region[3])
+                        toss = toss and (self.crop_region[0] <= float(det[2]) <= self.crop_region[2] and self.crop_region[1] <= float(det[3]) <= self.crop_region[3])
                     if not toss:
                         if get_conf:
                             curr_boxes.append(det + [score])
                         else:
                             curr_boxes.append(det)
                         curr_counts += 1
+
             gt_boxes.append(curr_boxes)
             gt_counts.append(curr_counts)
 
@@ -79,6 +86,13 @@ class ModelProcessor:
                 return x
         def f(i):
             gt_boxes[i] = clean(gt_boxes[i])
-        list(exec.map(f, range(len(gt_boxes))))
+        # list(exec.map(f, range(len(gt_boxes)))) 
 
         return gt_boxes, gt_counts
+
+
+
+a = ModelProcessor("yolov3-coco", VideoData("auburn_first_angle", 10), 2, 0.7, 30)
+# assert type("class") is float
+print(True or False)
+a.get_ground_truth(0,1800)

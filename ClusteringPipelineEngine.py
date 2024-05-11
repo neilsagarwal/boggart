@@ -49,7 +49,7 @@ class ClusteringPipelineEngine:
     def get_hour_vecs(self, hour, get_skips=False, get_df=False):
         vd = VideoData(self.vid_label, hour)
         self.ip = IngestTimeProcessing(vd, self.bg_conf, self.traj_conf)
-        vecs = parallelize_update_dictionary(self._get_vec, range(0, self.total_frames_per_hour, self.query_seg_size), total_cpus=60, max_workers=30)
+        vecs = parallelize_update_dictionary(self._get_vec, range(0, self.total_frames_per_hour, self.query_seg_size), total_cpus=40, max_workers=20)
         self.ip = None
 
         skips = [k for k,v in vecs.items() if v is None]
@@ -86,6 +86,12 @@ class ClusteringPipelineEngine:
         n_clusters = max(2, int(percent_clusters * len(self.all_vecs)))
 
         _, clusters, centroids, _, _ = IngestTimeProcessing.cluster_profile(self.all_vecs.copy(), n_clusters=n_clusters)
+        # print(f"all vecs: {self.all_vecs}")
+        # print(f"all vecs len: {len(self.all_vecs)}")
+        # print(f"all dfs: {self.all_dfs}")
+        # print(f"clusters:{clusters}")
+        # print(f"len clusters:{len(clusters)}")
+        # print(f"centroids:{centroids}")
 
         if not np.array_equal(centroids[clusters][centroids], centroids):
             clusters[centroids] = list(range(n_clusters))
@@ -93,6 +99,7 @@ class ClusteringPipelineEngine:
         self.all_dfs["cluster"] = clusters
 
         centroids_df = self.all_dfs.loc[centroids].copy()
+        print(centroids_df)
 
         mfs_sweep_index = 0
         sweep_chunk_length = 8
@@ -111,13 +118,14 @@ class ClusteringPipelineEngine:
                     qp = QueryProcessor(query_type, vd, model, query_class, self.query_conf, mfs, self.bg_conf, self.traj_conf, ioda, self.query_seg_size)
                     centroid_qps.append([chunk_start, query_seg_start, qp])
 
+            # run query about centroid chunks
             if len(centroid_qps) > 0:
-
                 self.qp_sweep = centroid_qps
-                c_sweep_res = parallelize_update_dictionary(self._sweep_helper, range(len(centroid_qps)), total_cpus=60, max_workers=min(60, len(centroid_qps)))
+                c_sweep_res = parallelize_update_dictionary(self._sweep_helper, range(len(centroid_qps)), total_cpus=40, max_workers=min(40, len(centroid_qps)))
                 self.qp_sweep = None
                 _tempDF = list(map(itemgetter(1), sorted(c_sweep_res.items(), key=itemgetter(0))))
                 c_sweep_res = pd.concat(_tempDF).reset_index().drop(columns="index")
+            
                 entire_df = pd.concat([entire_df, c_sweep_res.copy()]) if entire_df is not None else c_sweep_res
                 c_sweep_res = c_sweep_res[c_sweep_res.score >= acc_target].sort_values(["hour", "seg_start"])
                 c_sweep_res = c_sweep_res.loc[c_sweep_res.groupby(["hour", "seg_start"]).mfs_approach.idxmax()]
@@ -132,7 +140,6 @@ class ClusteringPipelineEngine:
             full_df = pd.concat([c_sweep_res, full_df]) if full_df is not None else c_sweep_res
 
         full_df = full_df.merge(self.all_dfs.loc[centroids], on=["hour", "chunk_start", "seg_start"]).sort_values("cluster").reset_index().drop(columns=["index"])
-
         assert len(full_df) == len(centroids)
 
         self.all_dfs["mfs_approach"] = full_df.mfs_approach.values[self.all_dfs["cluster"]]
@@ -149,14 +156,16 @@ class ClusteringPipelineEngine:
             remaining_qps.append([chunk_start, seg_start, qp])
 
         self.qp_sweep = remaining_qps
-        remaining_query_results = parallelize_update_dictionary(self._sweep_helper, range(len(remaining_qps)), total_cpus=72, max_workers=36)
+        remaining_query_results = parallelize_update_dictionary(self._sweep_helper, range(len(remaining_qps)), total_cpus=40, max_workers=20)
         self.qp_sweep = None
 
         _tempDF = list(map(itemgetter(1), sorted(remaining_query_results.items())))
         remaining_query_results = pd.concat(_tempDF).reset_index().drop(columns="index")
 
         mfs = remaining_query_results.min_frames.sum() + len(centroids) * self.query_seg_size * self.fps / 30
+        # Final results
         full_results = pd.concat([full_df, remaining_query_results]).sort_values(["hour", "seg_start"]).reset_index().drop(columns="index")
+        print(full_results)
         score = np.round(full_results.score.mean(), 4)
 
         assert len(full_results) == len(self.all_dfs)

@@ -5,6 +5,7 @@ from ingest import IngestTimeProcessing
 from QueryProcessor import QueryProcessor
 from utils import parallelize_update_dictionary
 from VideoData import VideoData
+from ModelProcessor import ModelProcessor
 
 class Experiment:
 
@@ -88,7 +89,7 @@ class Experiment:
 
     def run_ingest(self):
         try:
-            res = parallelize_update_dictionary(self._ingest_helper_fn, range(len(self.ingest_combos)), total_cpus=70, max_workers=15)
+            res = parallelize_update_dictionary(self._ingest_helper_fn, range(len(self.ingest_combos)), total_cpus=40, max_workers=10)
             return res
         except Exception as e:
             print("FAILED AT ", e)

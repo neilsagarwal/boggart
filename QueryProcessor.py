@@ -315,7 +315,7 @@ class QueryProcessor:
             for bbox_gt, sr in zip(gt_bboxes, query_results):
                 scores.append(calculate_bbox_accuracy(bbox_gt, sr))
             return_dictionary["scores"] = scores
-            
+            # print(scores)
             if get_mfs:
                 return_dictionary["mfs"] = list(map(itemgetter(0), mfs_dets))
 

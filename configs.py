@@ -1,7 +1,7 @@
 import os
 
 # location of boggart repository
-BOGGART_REPO_PATH = "/home/neil/boggart"
+BOGGART_REPO_PATH = "/home/kth/rva/boggart"
 main_dir = f"{BOGGART_REPO_PATH}/data/"
 
 assert os.path.exists(BOGGART_REPO_PATH), "Update Boggart Repository Path in configs.py"
@@ -37,10 +37,19 @@ crops = {
         "bicycle" : [0, 0, 1920, 500],
         "truck" : [0, 0, 1920, 500]
     },
+
+    "jackson_hole_wy" : {
+        "person" : [0, 0, 1920, 500],
+        "car" : [0, 0, 1920, 500],
+        "bicycle" : [0, 0, 1920, 500],
+        "truck" : [0, 0, 1920, 500]
+    },
 }
 
 frame_bounds = {
     "auburn_first_angle": [1080, 1920],
+
+    "jackson_hole_wy": [1080, 1920],
 }
 
 class BackgroundConfig:

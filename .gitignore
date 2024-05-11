@@ -4,3 +4,4 @@ data/
 hwang/
 models/
 inference_results/
+yolov5*
