@@ -8,17 +8,25 @@ from configs import BOGGART_REPO_PATH
 from db_model import DetectionResult, Frame
 from utils import parallelize_update_dictionary
 
-ml_model = "yolov3-coco"
-video_name = "auburn_first_angle"                    
+video_name = "lausanne_crf37_pont_bassieres"
+ml_model = "yolov5"
 hour = 10
-
-csv_location = f"{BOGGART_REPO_PATH}/inference_results/{ml_model}/{video_name}/{video_name}{hour}.csv"
-
-assert os.path.exists(csv_location)
+csv_path = f"{BOGGART_REPO_PATH}/inference_results/{ml_model}/{video_name}/{video_name}{hour}.csv"
 
 def exec(frame_start, num_frames=900):
-    db = connect(video_name, host='localhost', maxPoolSize=10000)
-    df = pd.read_csv(csv_location, names=["frame", "x1", "y1", "x2", "y2", "label", "conf"])
+    db = connect(
+            db=video_name,
+            username='root',
+            password='root',
+            host='mango4.kaist.ac.kr',
+            authentication_source='admin',
+            port=27017,
+            maxPoolSize=10000)
+
+    df = pd.read_csv(csv_path, skiprows=1,names=["frame", "x1", "y1", "x2", "y2", "label", "conf"], dtype=str)
+    df['frame'] = df['frame'].astype(float).astype(int)
+    df['conf'] = df['conf'].astype(float)
+    
     for i in trange(frame_start, frame_start+num_frames):
         frame = None
         try:
@@ -28,7 +36,7 @@ def exec(frame_start, num_frames=900):
         except DoesNotExist:
             pass
 
-        curr_data = df[df['frame'] == i]
+        curr_data = df[df['frame'] == i+1]
 
         # save det
         det = DetectionResult()
@@ -45,4 +53,6 @@ def exec(frame_start, num_frames=900):
         frame.inferenceResults[ml_model] = det
         frame.save()
 
-parallelize_update_dictionary(exec, range(0, 108000, 900), max_workers=60, total_cpus=60)
+
+assert os.path.exists(csv_path)
+parallelize_update_dictionary(exec, range(0, 108000, 900), max_workers=40, total_cpus=40)
