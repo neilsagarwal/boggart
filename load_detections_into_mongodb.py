@@ -38,7 +38,6 @@ def exec(frame_start, num_frames=900):
             pass
 
         curr_data = df[df['frame'] == i+1]
-        # print(f"curr:{curr_data}")
 
         # save det
         det = DetectionResult()
@@ -58,14 +57,3 @@ def exec(frame_start, num_frames=900):
 
 assert os.path.exists(csv_path)
 parallelize_update_dictionary(exec, range(0, 108000, 900), max_workers=40, total_cpus=40)
-
-# for i in range(0, 108000, 900):
-#     df['frame'].
-# exec(0)
-# df = pd.read_csv(csv_path, skiprows = 1, names=["frame", "x1", "y1", "x2", "y2", "label", "conf"], dtype=str)
-# df['frame'] = df['frame'].astype(float).astype(int)
-# # df['frame'].astype(int)
-# print(df['frame'])
-# print(df)
-# curr_data = df[df['frame'] == 0+1]
-# print(curr_data)
