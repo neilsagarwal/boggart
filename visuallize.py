@@ -153,10 +153,11 @@ class ResultProcessor:
             idx = 'gt'
         elif self.type == 1:
             idx = 'trajectory'
-        else self.type == 2:
+        else:
             idx = 'boggart_results'
-        video_path = self.output_video_path.split('.')[0] + idx + self.output_video_path.split('.')[1] 
-        return cv2.VideoWriter(self.video_path, self.fourcc, self.fps, (self.width, self.height))
+ 
+        self.output_video_path = self.output_video_path.split('.')[0] + '_' + idx + '_.' + self.output_video_path.split('.')[1]
+        return cv2.VideoWriter(self.output_video_path, self.fourcc, self.fps, (self.width, self.height))
 
     def draw_bounding_boxes(self, frame, frame_data):
         for _, row in frame_data.iterrows():
@@ -215,7 +216,7 @@ if __name__ == "__main__":
     # yolo_csv_path = f"{main_dir}/boggart/inference_results/yolov5/{video_name}/{video_name}10.csv"
     # traj_csv_path = f"{main_dir}/boggart/data/{video_name}10/trajectories/deprecated/0_0.1_30_16_1800.csv"
     # boggart_result_dir = f"{main_dir}/boggart/data/{video_name}10/boggart_results/bbox"
-    video_name = "auburn_first_angle"
+    video_name = "lausanne_pont_bassieres"
     
     main_dir = "/home/kth/rva"
     video_path = f"{main_dir}/{video_name}.mp4"
@@ -233,7 +234,7 @@ if __name__ == "__main__":
     3: query_results
     """
     _type = 1
-    end_frame = 45000
+    end_frame = 10000
 
     processor = ResultProcessor(video_path, output_video_path, trajectory_dir, boggart_result_dir, query_result_dir, yolo_path, _type, end_frame)
     processor.run_draw_bbox()

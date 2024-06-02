@@ -4,7 +4,7 @@ from Experiment import Experiment
 from VideoData import VideoData
 
 # vid = "lausanne_pont_bassieres"
-vid = "auburn_crf23_first_angle"
+vid = "auburn_first_angle"
 hours = list(range(10,11))
 
 ### AHEAD-OF-TIME PROCESSING ###

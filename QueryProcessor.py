@@ -180,7 +180,7 @@ class QueryProcessor:
 
         return delegate_frames
 
-
+    # key frame에서의 traejctory와 gt_bbox 이용해서 객체 검출하기
     def _get_data_per_track(self, detections, tracking_results, ioda_threshold, query):
         assert len(detections) != 0
         key_frame_information = dict()
