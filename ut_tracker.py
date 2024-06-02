@@ -539,8 +539,6 @@ class Tracker:
                 objectsToKeep.append(obj)
         self.mObjectList = objectsToKeep
 
-
-
     def process_frame(self, foreground, orig_im, save_ts):
         self.all_times = 0
 
@@ -566,9 +564,11 @@ class Tracker:
         kps_loc_fname = self.kps_loc_template.format(frame_no=self.save_ts)
         kps_matches_fname = self.kps_matches_template.format(frame_no=self.save_ts)
 
+        # blob에서 sift써서 keypoint들 추출, keypoint는 blob의 feature
         pointsBlob = FeatureDetectorExtractorMatcher.detect(orig_im.copy(), self.blob_detector.getBGSMask()) # if not IGNORE_MASK else None)
 
         pointsBlobToDump = np.array(pointsBlob.kp).astype(np.int16) * 2 # scale back up for query-time usage
+        # blob의 keypoint들 저장
         with open(kps_loc_fname, 'wb') as f:
             pickle.dump(pointsBlobToDump, f)
 
@@ -589,6 +589,7 @@ class Tracker:
 
         matches_indices = [(m.queryIdx, m.trainIdx) for m in matches]
         matchesToDump = np.array(list(zip(*matches_indices)))
+        # 두 frame간의 keypoint 매칭 정보 저장.
         with open(kps_matches_fname, 'wb') as f:
             pickle.dump(matchesToDump, f)
         self.all_times += time.time()-det_time

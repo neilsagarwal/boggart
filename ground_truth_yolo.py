@@ -8,11 +8,20 @@ import numpy as np
 import pandas as pd
 import os
 import cv2
+from configs import BOGGART_REPO_PATH
+# from load_detections_into_mongodb import load_to_mongodb
+if torch.cuda.is_available():
+    device = torch.device("cuda:2")
+    model = torch.hub.load('ultralytics/yolov5', 'yolov5l')
+    model.to(device)
 
-model = torch.hub.load('ultralytics/yolov5', 'yolov5n')
-main_dir = '/home/kth/rva/boggart'
-csv_path = f'{main_dir}/inference_results/yolov3-coco/auburn_first_angle/auburn_first_angle10.csv'
-
+# video_name = "auburn_crf47_first_angle"
+# ml_model = "yolov3-coco"
+video_name = "lausanne_crf47_pont_bassieres"
+ml_model = "yolov5"
+hour = 10
+# csv_path = f'{main_dir}/inference_results/yolov3-coco/auburn_first_angle/auburn_crf23_first_angle10.csv'
+csv_path = f"{BOGGART_REPO_PATH}/inference_results/{ml_model}/{video_name}/{video_name}{hour}.csv"
 
 def run_yolo(ingest_combos, vd, chunk_size):
     try:
@@ -66,12 +75,10 @@ def run_yolo(ingest_combos, vd, chunk_size):
 
 
 if __name__ == "__main__":
-    vid = "auburn_first_angle"
-    hour = 10
     chunk_size = 1800
     query_seg_size = 1800
 
-    video_data = VideoData(db_vid = vid, hour = hour)
+    video_data = VideoData(db_vid = video_name, hour = hour)
 
     minutes = list(range(0, 60 * 1800, 1800))
 
@@ -80,20 +87,21 @@ if __name__ == "__main__":
         "peak_thresh": [0.1],
         "fps": [30]
     }
-    # additional_sweeps = None
-    # if additional_sweeps is not None:
-    #     for k, v in additional_sweeps.items():
-    #         param_sweeps[k] = v
 
     sweep_param_keys = list(param_sweeps.keys())[::-1]
-
+    # print(sweep_param_keys)
     _combos = list(product(*[param_sweeps[k] for k in sweep_param_keys]))
-
+    # print(_combos)
     segment_combos = []
     for minute in minutes:
         chunk_starts = list(range(minute, minute+1800, chunk_size))
         segment_combos.append(chunk_starts)
+    # print(segment_combos)
     ingest_combos = list(product(_combos, segment_combos))
-
-    
+    # print(ingest_combos)
+    # detect using model and store to csv file
     run_yolo(ingest_combos, video_data, chunk_size)
+
+
+    # csv -> mongodb
+    # load_to_mongodb()

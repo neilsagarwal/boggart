@@ -40,13 +40,14 @@ class VideoData:
         if start_chunk_idx == stop_chunk_idx:
             start -= (start_chunk_idx * self.stored_dur)
             stop -= (start_chunk_idx * self.stored_dur)
+            # print(start, stop)
             if self.decoder is None or self.decoder[0] != start_chunk_idx:
                 import hwang
                 if not os.path.exists(self.vname_chunked(start_chunk_idx)):
                     raise NoMoreVideo
                 self.decoder = (start_chunk_idx, hwang.Decoder(self.vname_chunked(start_chunk_idx)))
             num_frames = self.decoder[1].video_index.frames()
-
+            # print(f"num frames {num_frames}")
             if start >= num_frames:
                 raise NoMoreVideo
 

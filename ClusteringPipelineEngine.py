@@ -89,9 +89,9 @@ class ClusteringPipelineEngine:
         # print(f"all vecs: {self.all_vecs}")
         # print(f"all vecs len: {len(self.all_vecs)}")
         # print(f"all dfs: {self.all_dfs}")
-        # print(f"clusters:{clusters}")
+        print(f"clusters:{clusters}")
         # print(f"len clusters:{len(clusters)}")
-        # print(f"centroids:{centroids}")
+        print(f"centroids:{centroids}")
 
         if not np.array_equal(centroids[clusters][centroids], centroids):
             clusters[centroids] = list(range(n_clusters))
@@ -108,6 +108,9 @@ class ClusteringPipelineEngine:
 
         full_df = None
 
+        # mfs_approach == max_distance
+        # target accuracy에 맞는 mfs_approach값 찾는 과정
+        # centroid에 query를 진행하여 mfs_approach값 찾고, 찾는 mfs_approach는 같은 cluster의 모든 chunk에 동일하게 적용
         while len(centroids_df) > 0:
 
             centroid_qps = []
@@ -127,7 +130,10 @@ class ClusteringPipelineEngine:
                 c_sweep_res = pd.concat(_tempDF).reset_index().drop(columns="index")
             
                 entire_df = pd.concat([entire_df, c_sweep_res.copy()]) if entire_df is not None else c_sweep_res
+                # mfs_approach값에 따른 score가 존재
+                # score < acc_target인것들 제거
                 c_sweep_res = c_sweep_res[c_sweep_res.score >= acc_target].sort_values(["hour", "seg_start"])
+                # score > acc_target인 것들중 mfs_approach 최대인 값 찾기
                 c_sweep_res = c_sweep_res.loc[c_sweep_res.groupby(["hour", "seg_start"]).mfs_approach.idxmax()]
 
                 centroids_df = centroids_df.merge(c_sweep_res, how='outer', indicator=True).loc[lambda x : x['_merge']=='left_only'][["seg_start", "chunk_start", "hour", "cluster"]]

@@ -10,6 +10,7 @@ class ModelProcessor:
     def __init__(self, model, video_data, query_class=None, query_conf=None, fps=None, do_crop=True, do_bound=True):
         assert type(video_data) is VideoData
         self.model = model
+        # self.video_data = VideoData("lausanne_crf23_pont_bassieres", 10)
         self.video_data = video_data
 
         # unnecessary for loading into db
@@ -92,7 +93,7 @@ class ModelProcessor:
 
 
 
-a = ModelProcessor("yolov3-coco", VideoData("auburn_first_angle", 10), 2, 0.7, 30)
-# assert type("class") is float
-print(True or False)
-a.get_ground_truth(0,1800)
+# a = ModelProcessor("yolov3-coco", VideoData("auburn_first_angle", 10), 2, 0.7, 30)
+# # assert type("class") is float
+# print(True or False)
+# a.get_ground_truth(0,1800)

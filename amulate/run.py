@@ -1,17 +1,16 @@
 # %%
-from ClusteringPipelineEngine import ClusteringPipelineEngine
-from Experiment import Experiment
-from VideoData import VideoData
+from boggart.VideoData import VideoData
+from boggart.amulate.tracker import Tracker
 
 # vid = "lausanne_pont_bassieres"
-vid = "auburn_crf23_first_angle"
+vid = "auburn_first_angle"
 hours = list(range(10,11))
 
 ### AHEAD-OF-TIME PROCESSING ###
 # This is done once per video
 for hr in hours:
     VideoData(vid, hr).check_vids()
-    Experiment(vid, hr).run_ingest()
+    Tracker(vid, hr).run_tracking()
 
 
 # QUERY-TIME PROCESSING ###

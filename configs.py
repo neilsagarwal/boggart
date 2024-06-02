@@ -37,6 +37,36 @@ crops = {
         "bicycle" : [0, 0, 1920, 500],
         "truck" : [0, 0, 1920, 500]
     },
+    "auburn_crf23_first_angle" : {
+        "person" : [0, 0, 1920, 400],
+        "car" : [0, 0, 1920, 500],
+        "bicycle" : [0, 0, 1920, 500],
+        "truck" : [0, 0, 1920, 500]
+    },
+    "auburn_crf32_first_angle" : {
+        "person" : [0, 0, 1920, 400],
+        "car" : [0, 0, 1920, 500],
+        "bicycle" : [0, 0, 1920, 500],
+        "truck" : [0, 0, 1920, 500]
+    },
+    "auburn_crf37_first_angle" : {
+        "person" : [0, 0, 1920, 400],
+        "car" : [0, 0, 1920, 500],
+        "bicycle" : [0, 0, 1920, 500],
+        "truck" : [0, 0, 1920, 500]
+    },
+    "auburn_crf42_first_angle" : {
+        "person" : [0, 0, 1920, 400],
+        "car" : [0, 0, 1920, 500],
+        "bicycle" : [0, 0, 1920, 500],
+        "truck" : [0, 0, 1920, 500]
+    },
+    "auburn_crf47_first_angle" : {
+        "person" : [0, 0, 1920, 400],
+        "car" : [0, 0, 1920, 500],
+        "bicycle" : [0, 0, 1920, 500],
+        "truck" : [0, 0, 1920, 500]
+    },
 
     "jackson_hole_wy" : {
         "person" : [0, 0, 1920, 500],
@@ -44,12 +74,36 @@ crops = {
         "bicycle" : [0, 0, 1920, 500],
         "truck" : [0, 0, 1920, 500]
     },
+    "lausanne_pont_bassieres" : {
+        "person" : [0, 0, 0, 0],
+        "car" : [0, 0, 0, 0],
+        "bicycle" : [0, 0, 0, 0],
+        "truck" : [0, 0, 0, 0]
+    },
+    "lausanne_crf23_pont_bassieres" : {
+        "person" : [0, 0, 0, 0],
+        "car" : [0, 0, 0, 0],
+        "bicycle" : [0, 0, 0, 0],
+        "truck" : [0, 0, 0, 0]
+    },
+    "lausanne_crf37_pont_bassieres" : {
+        "person" : [0, 0, 0, 0],
+        "car" : [0, 0, 0, 0],
+        "bicycle" : [0, 0, 0, 0],
+        "truck" : [0, 0, 0, 0]
+    },
 }
 
 frame_bounds = {
     "auburn_first_angle": [1080, 1920],
-
+    "auburn_crf23_first_angle": [1080, 1920],
+    "auburn_crf32_first_angle": [1080, 1920],
+    "auburn_crf37_first_angle": [1080, 1920],
+    "auburn_crf42_first_angle": [1080, 1920],
+    "auburn_crf47_first_angle": [1080, 1920],
     "jackson_hole_wy": [1080, 1920],
+    "lausanne_pont_bassieres": [720, 1280],
+    "lausanne_crf23_pont_bassieres": [720, 1280],
 }
 
 class BackgroundConfig:

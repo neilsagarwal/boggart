@@ -5,3 +5,5 @@ hwang/
 models/
 inference_results/
 yolov5*
+*.png
+requirements.txt

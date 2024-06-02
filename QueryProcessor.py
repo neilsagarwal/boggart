@@ -13,6 +13,7 @@ from ingest import IngestTimeProcessing
 from ModelProcessor import ModelProcessor
 from utils import (calculate_bbox_accuracy, calculate_count_accuracy,
                    get_ioda_matrix, calculate_binary_accuracy)
+from VideoData import VideoData
 
 class QueryProcessor:
 
@@ -266,6 +267,7 @@ class QueryProcessor:
             return None
         gt_bboxes, gt_counts = self.modelProcessor.get_ground_truth(query_segment_start, query_segment_start + self.query_segment_size)
         return_dictionary["gt_bboxes"] = gt_bboxes
+        # print(f"gt bboxes:{gt_bboxes}")
 
         return_dictionary["trajectory_df"] = trajectories_df.copy() if trajectories_df is not None else None
 
@@ -300,6 +302,7 @@ class QueryProcessor:
             if self.query_type in ["count", "binary"]:
                 results_data = self.execute_count(markers, key_frame_info, mot_results)
             else:
+                # propagate detection results
                 kps_loc_template = self.traj_conf.get_kps_loc_template(self.video_data.video_dir, self.bg_conf.peak_thresh)
                 kps_matches_template = self.traj_conf.get_kps_matches_template(self.video_data.video_dir, self.bg_conf.peak_thresh)
                 results_data = self.execute_bbox(markers, key_frame_info, mot_results, kps_loc_template, kps_matches_template, query_segment_start, query_segment_start + self.query_segment_size)
@@ -308,14 +311,13 @@ class QueryProcessor:
             # return_dictionary["distances"] = results_data["distances"]
 
         # a bit messy implementation because want to avoid duplicate work for count/binary
-
         if self.query_type == "bbox":
             return_dictionary["query_results"] = query_results
             scores = []
             for bbox_gt, sr in zip(gt_bboxes, query_results):
                 scores.append(calculate_bbox_accuracy(bbox_gt, sr))
             return_dictionary["scores"] = scores
-            # print(scores)
+
             if get_mfs:
                 return_dictionary["mfs"] = list(map(itemgetter(0), mfs_dets))
 

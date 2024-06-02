@@ -7,13 +7,12 @@ from tqdm import trange
 from configs import BOGGART_REPO_PATH
 from db_model import DetectionResult, Frame
 from utils import parallelize_update_dictionary
+# from ground_truth_yolo import ml_model, video_name, hour, csv_path
 
-ml_model = "yolov3-coco"
-video_name = "auburn_first_angle"                    
+video_name = "lausanne_crf37_pont_bassieres"
+ml_model = "yolov5"
 hour = 10
-csv_location = f"{BOGGART_REPO_PATH}/inference_results/{ml_model}/{video_name}/{video_name}{hour}.csv"
-print("Looking for CSV at:", csv_location)
-assert os.path.exists(csv_location)
+csv_path = f"{BOGGART_REPO_PATH}/inference_results/{ml_model}/{video_name}/{video_name}{hour}.csv"
 
 def exec(frame_start, num_frames=900):
     db = connect(
@@ -25,7 +24,7 @@ def exec(frame_start, num_frames=900):
             port=27017,
             maxPoolSize=10000)
 
-    df = pd.read_csv(csv_location, skiprows=1,names=["frame", "x1", "y1", "x2", "y2", "label", "conf"], dtype=str)
+    df = pd.read_csv(csv_path, skiprows=1,names=["frame", "x1", "y1", "x2", "y2", "label", "conf"], dtype=str)
     df['frame'] = df['frame'].astype(float).astype(int)
     df['conf'] = df['conf'].astype(float)
     # print(df['frame'])
@@ -56,12 +55,14 @@ def exec(frame_start, num_frames=900):
         frame.inferenceResults[ml_model] = det
         frame.save()
 
+
+assert os.path.exists(csv_path)
 parallelize_update_dictionary(exec, range(0, 108000, 900), max_workers=40, total_cpus=40)
 
 # for i in range(0, 108000, 900):
 #     df['frame'].
 # exec(0)
-# df = pd.read_csv(csv_location, skiprows = 1, names=["frame", "x1", "y1", "x2", "y2", "label", "conf"], dtype=str)
+# df = pd.read_csv(csv_path, skiprows = 1, names=["frame", "x1", "y1", "x2", "y2", "label", "conf"], dtype=str)
 # df['frame'] = df['frame'].astype(float).astype(int)
 # # df['frame'].astype(int)
 # print(df['frame'])

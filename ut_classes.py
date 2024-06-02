@@ -10,8 +10,12 @@ from ut_util_classes import log
 class BlobDetector:
 
     def __init__(self, morph_open_kernel=(5, 5), morph_close_kernel=(10, 10)):
+        # 각 blob의 Id, blob의 bbox(BlobRect)
+        # Dict[int, BlobRect]
         self.mBlobIdRectMap = dict()
+        # 각 pixel의 blob id 저장
         self.mLabelMask = None
+        # blob의 영역
         self.mCurrentBGSMask = None
         self.morph_open_kernel = morph_open_kernel
         self.morph_close_kernel = morph_close_kernel
@@ -81,7 +85,6 @@ class BlobDetector:
 
         for blobId in blobs_to_remove:
             del self.mBlobIdRectMap[blobId]
-
 
 class FeatureDetectorExtractorMatcher:
 
